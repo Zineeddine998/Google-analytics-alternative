@@ -45,3 +45,35 @@ app.get('/api', (req, res) => {
         console.log('Done');
       });
   });
+
+  app.get('/api/graph', (req,res) => {
+    const { metric } = req.query;
+    console.log(`Requested graph of metric : ${metric}`);
+    let promises = [];
+
+    for(let i = 7 ; i >= 0 ; i--){
+      promises.push(getData([metric], `${i}daysAgo`, `${i}daysAgo`));
+    }
+
+    promises = [].concat(...promises);
+    Promise.all(promises)
+    .then((data) => {
+      const body = {};
+       body[metric] = [];
+       Object.values(data).forEach((value) => {
+         body[metric].push(value[metric.startsWith('ga:') ? metric : `ga:${metric}`]);
+
+       });
+
+       console.log(body);
+       res.send({data : body});
+       console.log('Done');
+    } )
+
+    .catch((err) => {
+      console.log('Error');
+      console.log(err);
+      res.send({status : 'Error' , message : `${err}` });
+      console.log('done');
+    })
+  })
